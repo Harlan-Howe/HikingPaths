@@ -172,15 +172,14 @@ class PathMaker:
         :return: a consistent numerical value that is less than or equal to the least possible cost of the path from
                     this point to the end point.
         """
-        result = 0
+        heuristic_result = 0
         # ------------------------------------------
         # TODO #3: You should write this method
         #  I recommend using the euclidean or manhattan distance from point to self.end_point_r_c.
 
-        result = (abs(point[0]-self.end_point_r_c[0])+abs(point[1]-self.end_point_r_c[1])) * 0.707
 
         # ------------------------------------------
-        return result
+        return heuristic_result
 
     def perform_search(self) -> Optional[Tuple[int, int]]:
         """
@@ -193,24 +192,12 @@ class PathMaker:
         self.draw_start_point()
         self.draw_end_point()
 
-        # I recommend that you use a list of two-element lists for frontier, where the first element is the "f" value,
-        # and the second is the point (a two-element list in its own right). If you tell frontier to .sort(), it will
-        # sort by the first element, which allows you to make this act like a Priority Queue, but one that you can
-        # search for a point. (Alternately, you can just linear search the unsorted list for the lowest f value
-        # - you'll have to decide which one is faster, but note that the internal "sort()" command may run faster than
-        # if you wrote it yourself.)
-        frontier: List[Tuple[float, Tuple[int, int]]] = []
-
-        # please use these data structures for visited and record so that they work with other parts of the
-        #    program nicely.
-        visited: Set[Tuple[int, int]] = set([])
-
         # together, self.previous_point and self.best_g make up the "record" from the video.
         # self.previous point is an array of the same size as the map, holding (-1,-1) values that indicate
         #    the best path to here..
         self.previous_point: Optional[np.ndarray] = np.ones((self.original_map.shape[0], self.original_map.shape[1], 2),
                                                             dtype=int)
-        self.previous_point *= -1 # start all points at (-1,-1)
+        self.previous_point *= -1  # start all points at (-1,-1)
 
         # self.best_g is an array the same size as the map indicating the least expense to get from the start point
         #    to this point; the starting value is 9 x 10**9 for all points, which is very large.
@@ -218,64 +205,35 @@ class PathMaker:
                                                     dtype=float)
         self.best_g *= 9E9 #start all points at 9 * 10**9.
         count = 0
+        result = None  # hopefully, you'll improve on this.
 
         # ------------------------------------------
         # TODO #4: You need to write the rest of this method.
-        # consider what you need to do before you loop through the search cycle.
-        # &&&&&&&&&&&&&&&&&&& HOWE CODE
-        frontier: queue.PriorityQueue[Tuple[float, Tuple[int, int]]] = queue.PriorityQueue()
-        frontier.put((self.heuristic(self.start_point_r_c), self.start_point_r_c))
-        # visited: List[Tuple[int, int]] = []
-        result: List[Tuple[int, int]] = None
-        self.best_g[self.start_point_r_c[0], self.start_point_r_c[1]] = 0
-        while not frontier.empty():
-
-            f, pt = frontier.get()
-
-            if pt == self.end_point_r_c:
-                return pt
-
-            # if pt in visited:
-            #     continue
-
-            neighbors = self.get_neighbors_of(pt)
-            for pt2, d in neighbors:
-                # if pt2 in visited:
-                #     continue
-                cost = self.cost(pt, pt2, d)
-                g2 = self.best_g[pt[0], pt[1]] + cost
-                f2 = g2 + self.heuristic(pt2)
-                if g2 < self.best_g[pt2[0], pt2[1]]:
-                    self.best_g[pt2[0], pt2[1]] = g2
-                    self.previous_point[pt2[0], pt2[1]] = pt
-                    frontier.put((f2, pt2))
-
-            # visited.append(pt)
-
-
+        # Consider what you need to do before you loop through the search cycle. You'll need to create a "frontier"
+        # variable.
 
         # loop while there are still elements in frontier.
+        while True:  # replace "True" with a condition about the frontier, or exit the loop when you get there.
+
+            pt = (0, 0)  # I've put this here so the next part doesn't freak out, but pt should be the point you've
+            # just popped off the frontier.
 
 
-        # Suggested - if you are using the List as a priority queue, you might find this code helpful.
-        # this is the equivalent of popping from a minheap priority queue.... sorted by the first value in the list.
-        # # ---------------------
-        # frontier.sort()
-        # f, pt = frontier.pop(0)
-        # # ---------------------
 
-        # # optional... every few (1000?) loops, draw the path that leads to pt and update a "heat map" that shows what
-        # #  self.best_g looks like. You might find this interesting to observe what is going on as the computer works.
+
+
+            #  optional... every few (1000?) loops, draw the path that leads to pt and update a "heat map" that shows
+            #  what self.best_g looks like. You might find this interesting to observe what is going on as the computer
+            #  works.
             count += 1
             if count % 1000 == 0:
-                self.display_path(pt,(random.randint(64,255),random.randint(64,255),random.randint(64,255)))
+                self.display_path(pt,(random.randint(64, 255), random.randint(64, 255), random.randint(64, 255)))
                 self.show_map()
                 self.draw_heat_map()
-                self.draw_elevation_graph(pt) #maybe...
+                self.draw_elevation_graph(pt)  # maybe...
                 cv2.waitKey(1)
-
         # ------------------------------------------
-        print(f"{count=}")
+        # print(f"{count=}")
 
         return result
 
@@ -322,7 +280,7 @@ class PathMaker:
                  (self.end_point_x_y[0], self.end_point_x_y[1] + 10),
                  color=(0, 0, 192), thickness=1)
 
-    def display_path(self, path_terminator: Tuple[int, int]=None, color: Tuple[int, int, int] = (0, 192, 255)):
+    def display_path(self, path_terminator: Tuple[int, int] = None, color: Tuple[int, int, int] = (0, 192, 255)):
         """
         Draws the path tracing backward from path_terminator.
 
@@ -339,10 +297,7 @@ class PathMaker:
         # -----------------------------------------
         # TODO #2: You should write this method
         #       hint: make use of self.set_color_at_rc(color, point)
-        p = path_terminator
-        while self.best_g[p[0], p[1]] != 0:
-                self.set_color_at_rc(color, p)
-                p = self.previous_point[p[0], p[1]]
+
 
         # -----------------------------------------
 
