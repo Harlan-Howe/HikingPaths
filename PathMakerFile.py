@@ -218,7 +218,7 @@ class PathMaker:
             pt = (0, 0)  # I've put this here so the next part doesn't freak out, but pt should be the point you've
             # just popped off the frontier.
 
-
+            break  # temporary... just so the test doesn't hang.... remove this when you're ready.
 
 
 
